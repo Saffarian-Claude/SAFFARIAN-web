@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAFFARIAN Architectural Design</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --text-light: #E8E8E8;
+            --text-dark: #1A1A1A;
+        }
+
+        body {
+            font-family: 'Archivo', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* ── CAROUSEL ── */
+        .carousel {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            transition: opacity 1.8s ease-in-out;
+        }
+
+        .slide.active { opacity: 1; z-index: 1; }
+
+        .slide img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        /* Ken Burns variations */
+        .slide.active:nth-child(odd) img  { animation: kb1 14s ease-in-out forwards; }
+        .slide.active:nth-child(even) img { animation: kb2 14s ease-in-out forwards; }
+
+        @keyframes kb1 {
+            0%   { transform: scale(1)    translate(0, 0); }
+            100% { transform: scale(1.07) translate(-1.5%, -1%); }
+        }
+        @keyframes kb2 {
+            0%   { transform: scale(1.06) translate(1%, 0); }
+            100% { transform: scale(1)    translate(0, 1%); }
+        }
+        @keyframes kb3 {
+            0%   { transform: scale(1)    translate(-1%, 1%); }
+            100% { transform: scale(1.06) translate(1%, -0.5%); }
+        }
+        @keyframes kb4 {
+            0%   { transform: scale(1.05) translate(0, -1%); }
+            100% { transform: scale(1)    translate(-1%, 0.5%); }
+        }
+
+        /* ── OVERLAY ── */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* ── HAMBURGER ── */
+        .menu-icon {
+            position: absolute;
+            top: 52px; left: 56px;
+            width: 36px; height: 26px;
+            cursor: pointer;
+            pointer-events: all;
+            opacity: 0;
+            animation: fadeIn 1.5s ease-out 0.5s forwards;
+            z-index: 100;
+        }
+
+        .menu-icon span {
+            display: block;
+            width: 100%; height: 2px;
+            background: var(--text-light);
+            margin-bottom: 8px;
+            transition: all 0.35s ease;
+        }
+
+        .menu-icon span:last-child { margin-bottom: 0; }
+        .menu-icon:hover span { opacity: 0.55; }
+
+        .menu-icon.open span:nth-child(1) { transform: translateY(10px) rotate(45deg); }
+        .menu-icon.open span:nth-child(2) { opacity: 0; }
+        .menu-icon.open span:nth-child(3) { transform: translateY(-10px) rotate(-45deg); }
+
+        /* ── FULLSCREEN MENU ── */
+        .menu-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(10, 10, 10, 0.82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.45s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .menu-content { text-align: center; }
+
+        .menu-main-item {
+            font-size: 34px;
+            font-weight: 200;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: opacity 0.25s ease;
+            line-height: 1.2;
+        }
+
+        .menu-main-item:hover { opacity: 0.5; }
+        .menu-main-item a { color: inherit; text-decoration: none; }
+
+        .menu-submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, margin 0.4s ease;
+        }
+
+        .menu-submenu.open {
+            max-height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .menu-submenu-link {
+            display: block;
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            color: #C0C0C0;
+            text-decoration: none;
+            padding: 6px 0;
+            text-transform: uppercase;
+            transition: opacity 0.2s ease;
+        }
+
+        .menu-submenu-link:hover { opacity: 0.55; }
+
+        .menu-submenu-sublink {
+            display: block;
+            font-size: 12px;
+            font-weight: 200;
+            letter-spacing: 0.15em;
+            color: #888;
+            text-decoration: none;
+            padding: 4px 0;
+            text-transform: uppercase;
+            transition: opacity 0.2s ease;
+        }
+
+        .menu-submenu-sublink:hover { opacity: 0.55; }
+
+        .menu-submenu-title {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.2em;
+            color: rgba(232,232,232,0.35);
+            margin: 12px 0 6px;
+            text-transform: uppercase;
+        }
+
+        /* ── LOGO + NAME (top right) ── */
+        .site-header {
+            position: absolute;
+            top: 44px; right: 56px;
+            text-align: right;
+            opacity: 0;
+            animation: fadeIn 1.5s ease-out 0.5s forwards;
+            pointer-events: none;
+        }
+
+        .logo {
+            width: 90px;
+            height: auto;
+            display: block;
+            margin: 0 0 10px auto;
+            transition: opacity 0.6s ease;
+        }
+
+        .site-name {
+            font-size: 15px;
+            font-weight: 300;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            line-height: 1.3;
+            transition: color 0.6s ease;
+            margin-right: -0.18em;
+        }
+
+        /* ── TEXT BOTTOM LEFT ── */
+        .text-content {
+            position: absolute;
+            bottom: 72px; left: 56px;
+            opacity: 0;
+            animation: fadeIn 1.5s ease-out 1s forwards;
+            pointer-events: all;
+        }
+
+        .project-title {
+            font-size: 54px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            line-height: 0.93;
+            text-transform: uppercase;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: opacity 0.25s ease, color 0.6s ease;
+            margin-bottom: 6px;
+        }
+
+        .project-title:hover { opacity: 0.65; }
+
+        .project-subtitle {
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            opacity: 0.8;
+            transition: color 0.6s ease;
+        }
+
+        /* ── SLIDE COUNTER (bottom center) ── */
+        .slide-counter {
+            position: absolute;
+            bottom: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            animation: fadeIn 1.5s ease-out 1.5s forwards;
+        }
+
+        .dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.35);
+            cursor: pointer;
+            pointer-events: all;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        .dot.active {
+            background: rgba(255,255,255,0.9);
+            transform: scale(1.3);
+        }
+
+        /* ── COPYRIGHT (bottom right) ── */
+        .copyright {
+            position: absolute;
+            bottom: 28px; right: 56px;
+            font-size: 9px;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            color: rgba(232,232,232,0.5);
+            pointer-events: none;
+            opacity: 0;
+            animation: fadeIn 1.5s ease-out 1.8s forwards;
+            transition: color 0.6s ease;
+        }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .menu-icon { top: 28px; left: 28px; width: 32px; }
+            .site-header { top: 28px; right: 28px; }
+            .logo { width: 68px; }
+            .site-name { font-size: 12px; }
+            .text-content { bottom: 60px; left: 28px; }
+            .project-title { font-size: 36px; }
+            .project-subtitle { font-size: 12px; }
+            .copyright { right: 28px; }
+            .menu-main-item { font-size: 26px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ══ CAROUSEL ══ -->
+    <div class="carousel" id="carousel">
+
+        <div class="slide active">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Breaktime_web.jpg" alt="Czech Pavilion — Breaktime">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Castle_web.jpg" alt="Czech Pavilion — Castle">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Cathedral_web.jpg" alt="Czech Pavilion — Cathedral">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Contrasts_web.jpg" alt="Czech Pavilion — Contrasts">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Fade_web.jpg" alt="Czech Pavilion — Fade">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Glimpse_web.jpg" alt="Czech Pavilion — Glimpse">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_HouseofCards_web.jpg" alt="Czech Pavilion — House of Cards">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_MuchaStair_web.jpg" alt="Czech Pavilion — Mucha Stair">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Naturalness_web.jpg" alt="Czech Pavilion — Naturalness">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Stair2_web.jpg" alt="Czech Pavilion — Stair">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Tesseract_web.jpg" alt="Czech Pavilion — Tesseract">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Translucent_web.jpg" alt="Czech Pavilion — Translucent">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_Waiting_web.jpg" alt="Czech Pavilion — Waiting">
+        </div>
+        <div class="slide">
+            <img src="images/2023-EXPO/SamanSaffarian_CzechPavillion_WoodenAroma_web.jpg" alt="Czech Pavilion — Wooden Aroma">
+        </div>
+
+    </div>
+
+    <!-- ══ OVERLAY ══ -->
+    <div class="overlay">
+
+        <!-- Hamburger -->
+        <div class="menu-icon" id="menuIcon">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- Fullscreen Menu -->
+        <div class="menu-overlay" id="menuOverlay">
+            <div class="menu-content">
+
+                <div class="menu-main-item" data-menu="studio">Studio</div>
+                <div class="menu-submenu" id="studioSubmenu">
+                    <a href="#about" class="menu-submenu-link">About</a>
+                    <a href="#saman-saffarian" class="menu-submenu-sublink">Saman Saffarian</a>
+                    <div class="menu-submenu-title">Team</div>
+                    <a href="#team-current" class="menu-submenu-sublink">Current</a>
+                    <a href="#team-previous" class="menu-submenu-sublink">Previous</a>
+                    <a href="#collaborators" class="menu-submenu-link">Collaborators</a>
+                    <a href="#partners" class="menu-submenu-link">Partners</a>
+                </div>
+
+                <div class="menu-main-item" data-menu="projects">Projects</div>
+                <div class="menu-submenu" id="projectsSubmenu">
+                    <a href="#architecture-design" class="menu-submenu-link">Architecture & Design</a>
+                    <a href="#prototyping-fabrication" class="menu-submenu-link">Prototyping & Fabrication</a>
+                    <a href="#research-innovation" class="menu-submenu-link">Research & Innovation</a>
+                </div>
+
+                <div class="menu-main-item" data-menu="news">News</div>
+                <div class="menu-submenu" id="newsSubmenu">
+                    <a href="#lectures" class="menu-submenu-link">Lectures</a>
+                    <a href="#exhibitions" class="menu-submenu-link">Exhibitions</a>
+                    <a href="#publications" class="menu-submenu-link">Publications</a>
+                    <a href="#academic" class="menu-submenu-link">Academic</a>
+                    <a href="#awards" class="menu-submenu-link">Awards</a>
+                </div>
+
+                <div class="menu-main-item">
+                    <a href="#contact">Contact</a>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Logo + Name -->
+        <div class="site-header" id="siteHeader">
+            <img class="logo" id="logo"
+                 src="logos/SaffarianArchitecturalDesign_Logo_White.svg"
+                 alt="SAFFARIAN Architectural Design">
+            <div class="site-name" id="siteName">SAFFARIAN</div>
+        </div>
+
+        <!-- Project Text -->
+        <div class="text-content">
+            <div class="project-title" id="projectTitle">CZECH<br>PAVILION</div>
+            <div class="project-subtitle" id="projectSubtitle">EXPO 2025 · OSAKA, JAPAN</div>
+        </div>
+
+        <!-- Slide Dots -->
+        <div class="slide-counter" id="dotContainer"></div>
+
+        <!-- Copyright -->
+        <div class="copyright" id="copyright">© 2025 Saman Saffarian. All Rights Reserved.</div>
+
+    </div>
+
+    <script>
+        // ── CONFIG ──────────────────────────────────────────────
+        const SLIDE_DURATION = 6000; // ms per slide
+        const TRANSITION     = 1800; // must match CSS transition
+
+        const slideData = [
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+            { title: 'CZECH<br>PAVILION', subtitle: 'EXPO 2025 · OSAKA, JAPAN', link: '#czech-pavilion' },
+        ];
+
+        // ── ELEMENTS ────────────────────────────────────────────
+        const slides       = document.querySelectorAll('.slide');
+        const menuIcon     = document.getElementById('menuIcon');
+        const menuOverlay  = document.getElementById('menuOverlay');
+        const logo         = document.getElementById('logo');
+        const siteName     = document.getElementById('siteName');
+        const projectTitle = document.getElementById('projectTitle');
+        const projectSub   = document.getElementById('projectSubtitle');
+        const dotContainer = document.getElementById('dotContainer');
+        const copyright    = document.getElementById('copyright');
+
+        let current       = 0;
+        let timer         = null;
+        let transitioning = false;
+
+        // ── DOTS ────────────────────────────────────────────────
+        slides.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'dot' + (i === 0 ? ' active' : '');
+            dot.addEventListener('click', () => goTo(i));
+            dotContainer.appendChild(dot);
+        });
+
+        function updateDots() {
+            dotContainer.querySelectorAll('.dot').forEach((d, i) => {
+                d.classList.toggle('active', i === current);
+            });
+        }
+
+        // ── KEN BURNS per slide ─────────────────────────────────
+        const kbAnims = ['kb1', 'kb2', 'kb3', 'kb4'];
+
+        function applyKenBurns(slide) {
+            const img = slide.querySelector('img');
+            img.style.animation = 'none';
+            img.offsetHeight; // reflow
+            const anim = kbAnims[current % kbAnims.length];
+            img.style.animation = `${anim} 14s ease-in-out forwards`;
+        }
+
+        // ── COLOR ANALYSIS ──────────────────────────────────────
+        const slideColors = new Array(slides.length).fill(null);
+
+        function analyzeSlide(index) {
+            const img = slides[index].querySelector('img');
+            if (!img.complete || img.naturalWidth === 0) {
+                img.addEventListener('load', () => analyzeSlide(index), { once: true });
+                return;
+            }
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx    = canvas.getContext('2d');
+                const W = Math.min(img.naturalWidth,  400);
+                const H = Math.min(img.naturalHeight, 300);
+                canvas.width = W; canvas.height = H;
+                ctx.drawImage(img, 0, 0, W, H);
+
+                // Sample brightness at logo position (top-right) and text position (bottom-left)
+                function avgBrightness(x, y, w, h) {
+                    const d = ctx.getImageData(
+                        Math.min(x, W-1), Math.min(y, H-1),
+                        Math.min(w, W - x), Math.min(h, H - y)
+                    ).data;
+                    let sum = 0, n = d.length / 4;
+                    for (let i = 0; i < d.length; i += 4)
+                        sum += 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+                    return sum / n;
+                }
+
+                const logoBr = avgBrightness(Math.floor(W*0.75), 0,            Math.floor(W*0.25), Math.floor(H*0.25));
+                const textBr = avgBrightness(0,                  Math.floor(H*0.65), Math.floor(W*0.5),  Math.floor(H*0.35));
+                const menuBr = avgBrightness(0,                  0,            Math.floor(W*0.15), Math.floor(H*0.2));
+
+                slideColors[index] = {
+                    logo:   logoBr < 140 ? '#FFFFFF' : '#1A1A1A',
+                    logoSrc:logoBr < 140 ? 'logos/SaffarianArchitecturalDesign_Logo_White.svg'
+                                         : 'logos/SaffarianArchitecturalDesign_Logo_Black.svg',
+                    text:   textBr < 140 ? '#EFEFEF' : '#111111',
+                    menu:   menuBr < 140 ? '#FFFFFF' : '#111111',
+                };
+
+                if (index === current) applyColors();
+            } catch(e) {
+                slideColors[index] = {
+                    logo: '#FFFFFF',
+                    logoSrc: 'logos/SaffarianArchitecturalDesign_Logo_White.svg',
+                    text: '#EFEFEF',
+                    menu: '#FFFFFF'
+                };
+            }
+        }
+
+        slides.forEach((_, i) => analyzeSlide(i));
+
+        function applyColors() {
+            const c = slideColors[current];
+            if (!c) return;
+            logo.src               = c.logoSrc;
+            siteName.style.color   = c.logo;
+            projectTitle.style.color = c.text;
+            projectSub.style.color   = c.text;
+            copyright.style.color    = c.text;
+            menuIcon.querySelectorAll('span').forEach(s => s.style.background = c.menu);
+        }
+
+        // ── SLIDE TRANSITION ────────────────────────────────────
+        function goTo(index) {
+            if (transitioning || index === current) return;
+            transitioning = true;
+
+            slides[current].classList.remove('active');
+            current = (index + slides.length) % slides.length;
+            slides[current].classList.add('active');
+
+            applyKenBurns(slides[current]);
+            applyColors();
+            updateDots();
+
+            // Update text
+            const d = slideData[current];
+            projectTitle.innerHTML = d.title;
+            projectSub.textContent = d.subtitle;
+
+            setTimeout(() => { transitioning = false; }, TRANSITION);
+        }
+
+        function next() { goTo(current + 1); }
+
+        // ── AUTOPLAY ────────────────────────────────────────────
+        function startAutoplay() {
+            stopAutoplay();
+            timer = setInterval(next, SLIDE_DURATION);
+        }
+
+        function stopAutoplay() {
+            if (timer) { clearInterval(timer); timer = null; }
+        }
+
+        // Init Ken Burns on first slide
+        applyKenBurns(slides[0]);
+        setTimeout(startAutoplay, 500);
+
+        // Pause on hover
+        document.getElementById('carousel').addEventListener('mouseenter', stopAutoplay);
+        document.getElementById('carousel').addEventListener('mouseleave', startAutoplay);
+
+        // ── PROJECT TITLE CLICK ─────────────────────────────────
+        projectTitle.addEventListener('click', () => {
+            window.location.href = slideData[current].link;
+        });
+
+        // ── MENU ────────────────────────────────────────────────
+        let menuOpen = false;
+
+        menuIcon.addEventListener('click', () => {
+            menuOpen = !menuOpen;
+            menuIcon.classList.toggle('open', menuOpen);
+            menuOverlay.classList.toggle('open', menuOpen);
+            menuOpen ? stopAutoplay() : startAutoplay();
+        });
+
+        document.querySelectorAll('.menu-main-item[data-menu]').forEach(item => {
+            item.addEventListener('click', () => {
+                const id      = item.getAttribute('data-menu') + 'Submenu';
+                const sub     = document.getElementById(id);
+                const isOpen  = sub.classList.contains('open');
+
+                document.querySelectorAll('.menu-submenu').forEach(s => s.classList.remove('open'));
+                if (!isOpen) sub.classList.add('open');
+            });
+        });
+
+        // Close menu on ESC
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && menuOpen) {
+                menuOpen = false;
+                menuIcon.classList.remove('open');
+                menuOverlay.classList.remove('open');
+                startAutoplay();
+            }
+        });
+
+        // ── KEYBOARD NAVIGATION ─────────────────────────────────
+        document.addEventListener('keydown', e => {
+            if (menuOpen) return;
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft')  goTo(current - 1);
+        });
+
+        // ── TOUCH SWIPE ─────────────────────────────────────────
+        let touchStartX = 0;
+        document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+        document.addEventListener('touchend',   e => {
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(dx) > 50) dx < 0 ? next() : goTo(current - 1);
+        });
+    </script>
+</body>
+</html>
